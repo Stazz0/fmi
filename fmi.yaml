@@ -1,0 +1,70 @@
+service: my-fmi-app
+frameworkVersion: ">=a.b.c"
+
+custom:
+  fmiConfigFile: "./config/fmi.yml"
+
+provider:
+  Resources:
+    MyS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.stage}-mybucketname
+
+    MyDynamoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+functions:
+  myFmiFunction:
+    handler: src/handler.myHandler
+    events:
+      - http:
+          path: /mypath
+          method: GET
+    layers:
+      - arn:aws:lambda:region:account_id:layer:MyLayerName
+    environment:
+      MY_ENVIRONMENT_VARIABLE: value
+    polkitPolicy:
+      Version: API_VERSION
+      Statements:
+        - Effect: Allow
+          Action: s3:*
+          Resource:
+            Fn::GetAtt:
+              - MyS3Bucket
+              - Arn
+        - Effect: Allow
+          Action: dynamodb:*
+          Resource:
+            Fn::GetAtt:
+              - MyDynamoTable
+              - Arn
+
+package:
+  individually: true
+
+# Custom FMI Configuration File
+
+version: 1
+services:
+  myService:
+    mocks:
+      - type: s3
+        bucket: ${self:provider.environment.MY_S3_BUCKET}
+        keyPrefix: mockdata/
+      - type: ddb
+        tableName: ${self:provider.environment.MY_DYNAMODB_TABLE}
+        partitionKey: id
+        sortKey: timestamp
