@@ -1,5 +1,5 @@
 service: my-fmi-app
-frameworkVersion: ">=a.b.c"
+frameworkVersion: ">= frame work Version "
 
 custom:
   fmiConfigFile: "./config/fmi.yml"
@@ -9,7 +9,7 @@ provider:
     MyS3Bucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:provider.stage}-mybucketname
+        BucketName: ${self:provider.stage}-myfmibucket
 
     MyDynamoTable:
       Type: AWS::DynamoDB::Table
@@ -26,14 +26,14 @@ provider:
           WriteCapacityUnits: 5
 
 functions:
-  myFmiFunction:
-    handler: src/handler.myHandler
+  FmiFunction:
+    handler: src/handler.fmiHandler
     events:
       - http:
           path: /mypath
           method: GET
     layers:
-      - arn:aws:lambda:region:account_id:layer:MyLayerName
+      - arn:aws:lambda:region:account_id:layer:LayerName
     environment:
       MY_ENVIRONMENT_VARIABLE: value
     polkitPolicy:
@@ -67,4 +67,4 @@ services:
       - type: ddb
         tableName: ${self:provider.environment.MY_DYNAMODB_TABLE}
         partitionKey: id
-        sortKey: timestamp
+        sortKey: timestamp        
